@@ -28,7 +28,14 @@
 .product {
   margin-left: 30%;
 }
+.search-box{
+  width: 408px;
+  margin: 28px;
+  height: 40px;
 
+  border: 1px solid skyblue;
+  padding-left: 20px;
+}
 .login {
   margin-left: 30%;
   margin-top: 100px;

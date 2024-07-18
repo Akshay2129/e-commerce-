@@ -1,5 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const jwtkey = 'e-comm';
 const cors = require('cors');
 require('./db/config');
 const User = require('./db/User');
@@ -16,7 +18,10 @@ app.post('/register', async (req, resp) => {
         let result = await user.save();
         result = result.toObject();
         delete result.password;
-        resp.status(200).send(result);
+        jwt.sign({ result }, jwtkey, { expiresIn: "2h" }, (err, token) => {
+            if (err) return res.status(500).send('Token Error');
+            resp.status(200).send({ result, auth: token });
+        });
     } catch (error) {
         console.error('Error saving data:', error);
         resp.status(400).send('Internal Server Error');
@@ -30,7 +35,11 @@ app.post('/login', async (req, resp) => {
         if (email && password) {
             let user = await User.findOne({ email, password }).select("-password");
             if (user) {
-                resp.status(200).send(user);
+                jwt.sign({ user }, jwtkey, { expiresIn: "2h" }, (err, token) => {
+                    if (err) return res.status(500).send('Token Error');
+                    resp.status(200).send({ user, auth: token });
+                });
+
             } else {
                 resp.status(400).send('No User found In Database');
             }
@@ -82,7 +91,48 @@ app.delete('/product/:id', async (req, resp) => {
     }
 });
 
+app.get('/product/:id', async (req, resp) => {
+    let result = await Product.findOne({ _id: req.params.id });
+    if (result) {
+        resp.send(result);
+    } else {
+        resp.status(404).send({ message: "Product not found" });
+    }
+})
 
+// update product api
+
+app.put('/product/:id', async (req, resp) => {
+    let result = await Product.updateOne({ _id: req.params.id }, {
+        $set: req.body
+    });
+    if (result) {
+        resp.send({ message: "Product updated successfully", result });
+
+    } else {
+        resp.status(404).send({ message: "Product not found" });
+    }
+})
+
+// search api
+
+app.get('/search/:key', async (req, res) => {
+    try {
+        const key = req.params.key;
+        const regex = new RegExp(key, 'i');
+        const result = await Product.find({
+            "$or": [
+                { name: { $regex: regex } },
+                { company: { $regex: regex } },
+                { category: { $regex: regex } },
+                { price: { $regex: regex } }
+            ]
+        });
+        res.send(result);
+    } catch (error) {
+        res.status(500).send({ message: 'An error occurred while searching for products', error });
+    }
+});
 
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
