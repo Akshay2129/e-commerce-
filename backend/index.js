@@ -18,10 +18,11 @@ app.post('/register', async (req, resp) => {
         let result = await user.save();
         result = result.toObject();
         delete result.password;
-        jwt.sign({ result }, jwtkey, { expiresIn: "2h" }, (err, token) => {
-            if (err) return res.status(500).send('Token Error');
-            resp.status(200).send({ result, auth: token });
-        });
+        // jwt.sign({ result }, jwtkey, { expiresIn: "2h" }, (err, token) => {
+        //     if (err) return res.status(500).send('Token Error');
+        //     resp.status(200).send({ result, auth: token });
+        // });
+        resp.status(200).send({ result });
     } catch (error) {
         console.error('Error saving data:', error);
         resp.status(400).send('Internal Server Error');
@@ -35,10 +36,11 @@ app.post('/login', async (req, resp) => {
         if (email && password) {
             let user = await User.findOne({ email, password }).select("-password");
             if (user) {
-                jwt.sign({ user }, jwtkey, { expiresIn: "2h" }, (err, token) => {
-                    if (err) return res.status(500).send('Token Error');
-                    resp.status(200).send({ user, auth: token });
-                });
+                // jwt.sign({ user }, jwtkey, { expiresIn: "2h" }, (err, token) => {
+                //     if (err) return res.status(500).send('Token Error');
+                //     resp.status(200).send({ user, auth: token });
+                // });
+                resp.status(200).send({ user });
 
             } else {
                 resp.status(400).send('No User found In Database');
